@@ -4,8 +4,11 @@ import { COLORS, BORDER_RADIUS } from '../constants/theme';
 import { RABBI } from '../data/content';
 import TopHeader from '../components/TopHeader';
 
+const WHATSAPP_URL = `https://wa.me/${RABBI.whatsapp}`;
+
 export default function AboutScreen() {
   const handleCall = () => Linking.openURL(`tel:${RABBI.phone}`);
+  const handleWhatsApp = () => Linking.openURL(WHATSAPP_URL);
 
   return (
     <View style={styles.wrapper}>
@@ -27,10 +30,16 @@ export default function AboutScreen() {
           <Text style={styles.rabbiName}>{RABBI.name}</Text>
           <Text style={styles.rabbiCity}>נתיבות</Text>
         </View>
-        <Pressable style={styles.callBtn} onPress={handleCall}>
-          <Feather name="phone" size={16} color="#fff" />
-          <Text style={styles.callText}>צור קשר</Text>
-        </Pressable>
+        <View style={styles.rabbiActions}>
+          <Pressable style={styles.callBtn} onPress={handleCall}>
+            <Feather name="phone" size={16} color="#fff" />
+            <Text style={styles.callText}>טלפון</Text>
+          </Pressable>
+          <Pressable style={styles.whatsappBtn} onPress={handleWhatsApp}>
+            <Feather name="message-circle" size={16} color="#fff" />
+            <Text style={styles.callText}>וואטסאפ</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.section}>
@@ -112,7 +121,9 @@ const styles = StyleSheet.create({
   rabbiRole: { fontSize: 11, fontWeight: '600', color: COLORS.sandDark, letterSpacing: 0.5, marginBottom: 2 },
   rabbiName: { fontSize: 18, fontWeight: '700', color: COLORS.textDark },
   rabbiCity: { fontSize: 13, color: COLORS.textLight, marginTop: 2 },
+  rabbiActions: { flexDirection: 'row', gap: 10 },
   callBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: COLORS.sand, borderRadius: BORDER_RADIUS.full },
+  whatsappBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#25D366', borderRadius: BORDER_RADIUS.full },
   callText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   section: { backgroundColor: '#fff', padding: 18, borderRadius: BORDER_RADIUS.md, marginBottom: 16, borderWidth: 1, borderColor: COLORS.border },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },

@@ -1,7 +1,9 @@
-import { View, Text, ScrollView, Pressable, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, Image, StyleSheet, Alert, Linking, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import { Video } from 'expo-av';
 import { todayStudy, shiurim, RABBI } from '../data/content';
+import { useAppStore } from '../store/appStore';
 import { COLORS, BORDER_RADIUS } from '../constants/theme';
 import TopHeader from '../components/TopHeader';
 
@@ -9,14 +11,22 @@ const hebrewDays = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמי�
 const today = hebrewDays[new Date().getDay()];
 const todayShiurim = shiurim.filter((s) => s.day === today || s.day.includes(today));
 
+export type FeaturedMedia = { type: 'image' | 'video'; url: string; title?: string };
+// כשהרב מעלה אירוע מרכזי — להגדיר כאן או לטעון מ-Firebase
+const FEATURED: FeaturedMedia | null = null;
+
 export default function HomeScreen() {
   const nav = useNavigation<any>();
+  const { width } = useWindowDimensions();
+  const { userName } = useAppStore();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב';
-
+  const welcomeText = userName ? `ברוך הבא ${userName}` : 'ברוכים הבאים';
+  const featuredWidth = width - 32;
+  const featuredHeight = featuredWidth * (9 / 16);
   return (
     <View style={styles.wrapper}>
-      <TopHeader showBack />
+      <TopHeader showBack={false} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
@@ -24,7 +34,7 @@ export default function HomeScreen() {
         <View style={styles.headerRow}>
           <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <View style={styles.greeting}>
-            <Text style={styles.greetingSub}>{greeting} ✨</Text>
+            <Text style={styles.greetingSub}>{greeting} · {welcomeText} ✨</Text>
             <Text style={styles.title}>חב"ד לנוער נתיבות</Text>
             <Text style={styles.subtitle}>הרב מנחם ידגר</Text>
           </View>
@@ -34,18 +44,48 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Rabbi message / image section */}
+      {/* אירוע מרכזי — תמונה או סרטון 16:9 */}
+      {FEATURED && (
+        <View style={[styles.featuredSection, { marginHorizontal: 16, marginTop: 20 }]}>
+          <Text style={styles.featuredLabel}>אירוע מרכזי</Text>
+          <View style={[styles.featuredWrap, { width: featuredWidth, height: featuredHeight }]}>
+            {FEATURED.type === 'video' ? (
+              <Video
+                source={{ uri: FEATURED.url }}
+                style={StyleSheet.absoluteFill}
+                useNativeControls
+                resizeMode="contain"
+                isLooping
+              />
+            ) : (
+              <Image
+                source={{ uri: FEATURED.url }}
+                style={[StyleSheet.absoluteFill, styles.featuredImage]}
+                resizeMode="cover"
+              />
+            )}
+            {FEATURED.title ? (
+              <View style={styles.featuredTitleWrap}>
+                <Text style={styles.featuredTitle} numberOfLines={2}>{FEATURED.title}</Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      )}
+
+      {/* Rabbi + WhatsApp */}
       <View style={styles.rabbiSection}>
         <View style={styles.rabbiCard}>
           <View style={styles.rabbiAvatar}>
             <Image source={RABBI.photo} style={styles.rabbiPhoto} resizeMode="cover" />
           </View>
           <View style={styles.rabbiContent}>
-            <Text style={styles.rabbiLabel}>הודעה מהרב</Text>
-            <Text style={styles.rabbiMessage}>
-              "ברוכים הבאים! שמחים לראותכם. מקווים לראות אתכם בשיעורים ובפעילויות — בית חב"ד פתוח לכולם. בהצלחה בלימוד!"
-            </Text>
-            <Text style={styles.rabbiName}>— {RABBI.name}</Text>
+            <Text style={styles.rabbiLabel}>הרב מנחם ידגר</Text>
+            <Text style={styles.rabbiName}>{RABBI.role}</Text>
+            <Pressable style={styles.whatsappBtn} onPress={() => Linking.openURL(`https://wa.me/${RABBI.whatsapp}`)}>
+              <Feather name="message-circle" size={18} color="#fff" />
+              <Text style={styles.whatsappText}>וואטסאפ לרב</Text>
+            </Pressable>
           </View>
         </View>
       </View>
@@ -61,11 +101,20 @@ export default function HomeScreen() {
           <Feather name="chevron-left" size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '180deg' }] }} />
         </Pressable>
 
-        <Pressable style={[styles.actionBtn, styles.actionSky]} onPress={() => nav.navigate('Updates')}>
-          <View style={styles.actionIcon}><Feather name="rss" size={26} color="#fff" /></View>
+        <Pressable style={[styles.actionBtn, styles.actionSky]} onPress={() => nav.navigate('Notifications')}>
+          <View style={styles.actionIcon}><Feather name="bell" size={26} color="#fff" /></View>
+          <View style={styles.actionText}>
+            <Text style={styles.actionTitle}>התראות</Text>
+            <Text style={styles.actionSub}>הודעות מהרב · שיעורים היום</Text>
+          </View>
+          <Feather name="chevron-left" size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '180deg' }] }} />
+        </Pressable>
+
+        <Pressable style={[styles.actionBtn, styles.actionUpdates]} onPress={() => nav.navigate('Updates')}>
+          <View style={styles.actionIcon}><Feather name="image" size={26} color="#fff" /></View>
           <View style={styles.actionText}>
             <Text style={styles.actionTitle}>עדכונים</Text>
-            <Text style={styles.actionSub}>שיעורים והתראות</Text>
+            <Text style={styles.actionSub}>תמונות מפעילויות ושיעורים</Text>
           </View>
           <Feather name="chevron-left" size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '180deg' }] }} />
         </Pressable>
@@ -73,8 +122,17 @@ export default function HomeScreen() {
         <Pressable style={[styles.actionBtn, styles.actionGreen]} onPress={() => nav.navigate('Chavrutot')}>
           <View style={styles.actionIcon}><Feather name="users" size={26} color="#fff" /></View>
           <View style={styles.actionText}>
-            <Text style={styles.actionTitle}>חברותות</Text>
+            <Text style={styles.actionTitle}>חברותא</Text>
             <Text style={styles.actionSub}>מצא חברותא</Text>
+          </View>
+          <Feather name="chevron-left" size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '180deg' }] }} />
+        </Pressable>
+
+        <Pressable style={[styles.actionBtn, styles.actionVolunteer]} onPress={() => nav.navigate('Volunteer')}>
+          <View style={styles.actionIcon}><Feather name="heart" size={26} color="#fff" /></View>
+          <View style={styles.actionText}>
+            <Text style={styles.actionTitle}>התנדבות</Text>
+            <Text style={styles.actionSub}>צריך מתנדב? הצטרף כאן</Text>
           </View>
           <Feather name="chevron-left" size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '180deg' }] }} />
         </Pressable>
@@ -97,8 +155,8 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={[styles.sectionHeader, { justifyContent: 'space-between' }]}>
             <Text style={styles.sectionTitle}>שיעורים היום</Text>
-            <Pressable onPress={() => nav.navigate('Updates')}>
-              <Text style={styles.sectionLink}>כל השיעורים ←</Text>
+            <Pressable onPress={() => nav.navigate('Notifications')}>
+              <Text style={styles.sectionLink}>כל ההתראות ←</Text>
             </Pressable>
           </View>
           {todayShiurim.map((s) => (
@@ -115,8 +173,8 @@ export default function HomeScreen() {
         <View style={styles.noShiur}>
           <Text style={styles.noShiurEmoji}>📚</Text>
           <Text style={styles.noShiurText}>אין שיעורים מתוכננים היום</Text>
-          <Pressable onPress={() => nav.navigate('Updates')}>
-            <Text style={styles.noShiurLink}>ראה את כל לוח השיעורים</Text>
+          <Pressable onPress={() => nav.navigate('Notifications')}>
+            <Text style={styles.noShiurLink}>ראה את כל ההתראות</Text>
           </Pressable>
         </View>
       )}
@@ -152,9 +210,23 @@ const styles = StyleSheet.create({
   dateBadge: {
     marginHorizontal: 20, marginTop: 16, alignSelf: 'flex-start',
     backgroundColor: 'rgba(255,255,255,0.1)', paddingVertical: 6, paddingHorizontal: 14,
-    borderRadius: BORDER_RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
   },
   dateText: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+
+  featuredSection: { marginBottom: 4 },
+  featuredLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textLight, marginBottom: 8, marginHorizontal: 16 },
+  featuredWrap: { borderRadius: 24, overflow: 'hidden', backgroundColor: COLORS.charcoalMid },
+  featuredImage: { borderRadius: 24 },
+  featuredTitleWrap: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  featuredTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
   rabbiSection: { paddingHorizontal: 16, marginTop: 20 },
   rabbiCard: {
@@ -169,16 +241,31 @@ const styles = StyleSheet.create({
   },
   rabbiPhoto: { width: '100%', height: '100%' },
   rabbiContent: { flex: 1 },
-  rabbiLabel: { fontSize: 11, fontWeight: '600', color: COLORS.sandDark, letterSpacing: 0.5, marginBottom: 6 },
-  rabbiMessage: { fontSize: 15, lineHeight: 24, color: COLORS.textDark, fontStyle: 'italic' },
-  rabbiName: { fontSize: 12, color: COLORS.textLight, marginTop: 8, fontWeight: '500' },
+  rabbiLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textDark, marginBottom: 2 },
+  rabbiName: { fontSize: 12, color: COLORS.textLight, marginBottom: 12 },
+  whatsappBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#25D366',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  whatsappText: { fontSize: 14, fontWeight: '600', color: '#fff' },
 
   actions: { paddingHorizontal: 16, marginTop: 20, gap: 10 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: BORDER_RADIUS.md, gap: 14 },
+  actionBtn: {
+    flexDirection: 'row', alignItems: 'center', padding: 16,
+    borderRadius: 24, gap: 14,
+  },
   actionPrimary: { backgroundColor: COLORS.sand },
   actionSky: { backgroundColor: COLORS.sky },
+  actionUpdates: { backgroundColor: '#6B9BD1' },
   actionGreen: { backgroundColor: '#7EC8A4' },
-  actionIcon: { width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  actionVolunteer: { backgroundColor: '#E07B7B' },
+  actionIcon: { width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   actionText: { flex: 1 },
   actionTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
   actionSub: { fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 1 },
@@ -187,14 +274,14 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textDark },
   sectionLink: { fontSize: 13, fontWeight: '600', color: COLORS.skyDark },
   hayomCard: {
-    backgroundColor: '#fff', borderRadius: BORDER_RADIUS.md, padding: 20,
+    backgroundColor: '#fff', borderRadius: 24, padding: 20,
     borderWidth: 1, borderColor: COLORS.border,
   },
   hayomDate: { fontSize: 12, fontWeight: '600', color: COLORS.sandDark, marginBottom: 10 },
   hayomText: { fontSize: 15, lineHeight: 26, color: COLORS.textMid },
   shiurCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: '#fff', padding: 14, marginTop: 8,
-    borderRadius: BORDER_RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: 24, borderWidth: 1, borderColor: COLORS.border,
   },
   shiurTime: { fontSize: 18, fontWeight: '800', color: COLORS.skyDark, minWidth: 52 },
   shiurTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textDark },
@@ -207,7 +294,7 @@ const styles = StyleSheet.create({
   noShiurText: { fontSize: 15, color: COLORS.textMid },
   noShiurLink: { marginTop: 8, fontSize: 14, fontWeight: '600', color: COLORS.skyDark },
   takePartBtn: {
-    marginHorizontal: 16, marginTop: 24, padding: 20, borderRadius: BORDER_RADIUS.md,
+    marginHorizontal: 16, marginTop: 24, padding: 20, borderRadius: 24,
     backgroundColor: COLORS.sand, flexDirection: 'row', alignItems: 'center', gap: 14,
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6,
   },

@@ -1,21 +1,22 @@
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { RABBI } from '../data/content';
 import { COLORS, BORDER_RADIUS } from '../constants/theme';
 import TopHeader from '../components/TopHeader';
 
-// טיפוס לעדכון עתידי מ-Firebase (תמלל + תמונה)
-export interface AppUpdate {
+// התראות שהרב שולח — לדוגמא "היום ב-9 שיעור תניא"
+export interface RabbiNotification {
   id: string;
   title: string;
   body?: string;
-  imageUrl?: string;
+  time: string;
+  date: string;
   createdAt: string;
 }
 
-export default function UpdatesScreen() {
-  // עדכונים ייטענו מ-Firebase (אוסף עם תמונות ומלל)
-  const updates: AppUpdate[] = [];
+export default function NotificationsScreen() {
+  // ייטען מ-Firebase — הרב מעלה התראות
+  const notifications: RabbiNotification[] = [];
 
   return (
     <View style={styles.wrapper}>
@@ -25,44 +26,45 @@ export default function UpdatesScreen() {
           <View style={styles.headerBg} />
           <View style={styles.headerRow}>
             <View style={styles.headerIcon}>
-              <Feather name="image" size={28} color="#fff" />
+              <Feather name="bell" size={28} color="#fff" />
             </View>
             <View>
-              <Text style={styles.title}>עדכונים</Text>
-              <Text style={styles.sub}>תמונות מפעילויות ושיעורים</Text>
+              <Text style={styles.title}>התראות</Text>
+              <Text style={styles.sub}>הודעות מהרב · שיעורים והתראות</Text>
             </View>
           </View>
         </View>
 
-        {updates.length === 0 ? (
+        {notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
-              <Feather name="image" size={40} color={COLORS.skyDark} />
+              <Feather name="bell" size={40} color={COLORS.skyDark} />
             </View>
-            <Text style={styles.emptyTitle}>אין עדכונים כרגע</Text>
+            <Text style={styles.emptyTitle}>אין התראות כרגע</Text>
             <Text style={styles.emptyText}>
-              כאן יופיעו עדכונים עם תמונות ומלל. בהמשך ניתן יהיה להעלות תמונות ומלל (מחובר ל-Firebase).
+              כאן יופיעו ההתראות שהרב שולח — למשל "היום ב-9:00 שיעור תניא". בהמשך יחובר ל-Firebase.
             </Text>
           </View>
         ) : (
-          updates.map((item) => (
-            <View key={item.id} style={styles.card}>
-              {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.cardImage} resizeMode="cover" />
-              ) : null}
+          notifications.map((n) => (
+            <View key={n.id} style={styles.card}>
+              <View style={styles.cardTime}>
+                <Text style={styles.timeText}>{n.time}</Text>
+              </View>
               <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                {item.body ? <Text style={styles.cardDesc}>{item.body}</Text> : null}
+                <Text style={styles.cardTitle}>{n.title}</Text>
+                {n.body ? <Text style={styles.cardDesc}>{n.body}</Text> : null}
+                <Text style={styles.cardMeta}>{n.date}</Text>
               </View>
             </View>
           ))
         )}
 
         <View style={styles.info}>
-          <Text style={styles.infoEmoji}>📍</Text>
+          <Text style={styles.infoEmoji}>📩</Text>
           <View>
-            <Text style={styles.infoTitle}>בית חב"ד נתיבות</Text>
-            <Text style={styles.infoSub}>לפרטים: {RABBI.name}</Text>
+            <Text style={styles.infoTitle}>הרב מנחם ידגר</Text>
+            <Text style={styles.infoSub}>ההתראות נשלחות מהרב</Text>
           </View>
         </View>
         <View style={{ height: 120 }} />
@@ -106,7 +108,7 @@ const styles = StyleSheet.create({
   emptyState: {
     backgroundColor: '#fff',
     padding: 28,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: 24,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -123,18 +125,30 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textDark, marginBottom: 8 },
   emptyText: { fontSize: 14, color: COLORS.textMid, textAlign: 'center', lineHeight: 22 },
-  card: { backgroundColor: '#fff', borderRadius: BORDER_RADIUS.md, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
-  cardImage: { width: '100%', height: 200, backgroundColor: COLORS.offWhite },
-  cardBody: { padding: 16 },
+  card: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    marginBottom: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 16,
+    gap: 14,
+  },
+  cardTime: { alignItems: 'center', justifyContent: 'flex-start' },
+  timeText: { fontSize: 16, fontWeight: '800', color: COLORS.skyDark },
+  cardBody: { flex: 1 },
   cardTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textDark, marginBottom: 6 },
   cardDesc: { fontSize: 14, color: COLORS.textMid, lineHeight: 22 },
+  cardMeta: { fontSize: 12, color: COLORS.textLight, marginTop: 8 },
   info: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     backgroundColor: '#fff',
     padding: 16,
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: COLORS.border,
   },

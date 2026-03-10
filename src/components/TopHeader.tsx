@@ -1,5 +1,5 @@
 import { View, Text, Pressable, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,7 +15,7 @@ export default function TopHeader({ showBack = true }: TopHeaderProps) {
 
   const goBack = () => (nav.canGoBack?.() ? nav.goBack() : nav.navigate('Home'));
   const onNotifications = () => nav.navigate('Updates');
-  const onMenu = () => { /* TODO: open drawer/menu */ };
+  const onMenu = () => nav.dispatch(DrawerActions.openDrawer());
 
   return (
     <View style={[styles.wrapper, { paddingTop: insets.top }]}>

@@ -2,6 +2,7 @@ export const RABBI = {
   name: 'הרב מנחם ידגר',
   role: 'מנהל בית חב"ד לנוער',
   phone: '+972545367770',
+  whatsapp: '972545367770',
   photo: require('../../assets/rabbi-yadgar.png'),
 } as const;
 
