@@ -1,70 +1,104 @@
-import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { RABBI } from '../data/content';
-import { COLORS, BORDER_RADIUS } from '../constants/theme';
+import { COLORS, BORDER_RADIUS, SPACING, SHADOWS } from '../constants/theme';
 import TopHeader from '../components/TopHeader';
+import { getUpdates, type UpdateDoc } from '../services/firestore';
 
-// טיפוס לעדכון עתידי מ-Firebase (תמלל + תמונה)
-export interface AppUpdate {
-  id: string;
-  title: string;
-  body?: string;
-  imageUrl?: string;
-  createdAt: string;
+function UpdateCard({ item, index }: { item: UpdateDoc; index: number }) {
+  const hasImage = !!item.imageUrl;
+
+  return (
+    <View style={[card.wrap, !hasImage && card.wrapNoImage]}>
+      {hasImage && (
+        <View style={card.imageWrap}>
+          <Image source={{ uri: item.imageUrl }} style={card.image} resizeMode="cover" />
+          <View style={card.imageScrim} />
+          <View style={card.imageBadge}>
+            <Text style={card.imageBadgeText}>#{index + 1}</Text>
+          </View>
+        </View>
+      )}
+      <View style={card.body}>
+        {!hasImage && (
+          <View style={card.textOnlyIcon}>
+            <Feather name="file-text" size={18} color={COLORS.gold} />
+          </View>
+        )}
+        <Text style={card.title}>{item.title}</Text>
+        {item.body ? <Text style={card.desc}>{item.body}</Text> : null}
+      </View>
+    </View>
+  );
 }
 
 export default function UpdatesScreen() {
-  // עדכונים ייטענו מ-Firebase (אוסף עם תמונות ומלל)
-  const updates: AppUpdate[] = [];
+  const [updates, setUpdates] = useState<UpdateDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getUpdates().then(setUpdates).finally(() => setLoading(false));
+  }, []);
 
   return (
     <View style={styles.wrapper}>
-      <TopHeader />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerBg} />
-          <View style={styles.headerRow}>
-            <View style={styles.headerIcon}>
-              <Feather name="image" size={28} color="#fff" />
+      <TopHeader title="עדכונים" />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Page header */}
+        <View style={styles.pageHeader}>
+          <View style={styles.pageHeaderLeft}>
+            <View style={styles.pageIconWrap}>
+              <Feather name="image" size={22} color={COLORS.blue} />
             </View>
             <View>
-              <Text style={styles.title}>עדכונים</Text>
-              <Text style={styles.sub}>תמונות מפעילויות ושיעורים</Text>
+              <Text style={styles.pageTitle}>עדכונים</Text>
+              <Text style={styles.pageSub}>תמונות מפעילויות ושיעורים</Text>
             </View>
           </View>
+          {updates.length > 0 && (
+            <View style={styles.countPill}>
+              <Text style={styles.countPillText}>{updates.length} עדכונים</Text>
+            </View>
+          )}
         </View>
 
-        {updates.length === 0 ? (
-          <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Feather name="image" size={40} color={COLORS.skyDark} />
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color={COLORS.blue} />
+            <Text style={styles.loadingText}>טוען עדכונים...</Text>
+          </View>
+        ) : updates.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <View style={styles.emptyIconWrap}>
+              <Feather name="image" size={36} color={COLORS.blue} />
             </View>
             <Text style={styles.emptyTitle}>אין עדכונים כרגע</Text>
-            <Text style={styles.emptyText}>
-              כאן יופיעו עדכונים עם תמונות ומלל. בהמשך ניתן יהיה להעלות תמונות ומלל (מחובר ל-Firebase).
-            </Text>
+            <Text style={styles.emptyText}>כאן יופיעו עדכונים עם תמונות ומלל מהרב.</Text>
           </View>
         ) : (
-          updates.map((item) => (
-            <View key={item.id} style={styles.card}>
-              {item.imageUrl ? (
-                <Image source={{ uri: item.imageUrl }} style={styles.cardImage} resizeMode="cover" />
-              ) : null}
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                {item.body ? <Text style={styles.cardDesc}>{item.body}</Text> : null}
-              </View>
-            </View>
+          updates.map((item, i) => (
+            <UpdateCard key={item.id} item={item} index={i} />
           ))
         )}
 
-        <View style={styles.info}>
-          <Text style={styles.infoEmoji}>📍</Text>
-          <View>
-            <Text style={styles.infoTitle}>בית חב"ד נתיבות</Text>
-            <Text style={styles.infoSub}>לפרטים: {RABBI.name}</Text>
+        {/* Contact row */}
+        <View style={styles.contactCard}>
+          <View style={styles.contactLeft}>
+            <View style={styles.locationPin}>
+              <Feather name="map-pin" size={16} color={COLORS.red} />
+            </View>
+            <View>
+              <Text style={styles.contactTitle}>בית חב"ד נתיבות</Text>
+              <Text style={styles.contactSub}>לפרטים: {RABBI.name}</Text>
+            </View>
           </View>
         </View>
+
         <View style={{ height: 120 }} />
       </ScrollView>
     </View>
@@ -72,73 +106,143 @@ export default function UpdatesScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1 },
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  content: { padding: 16, paddingBottom: 20 },
-  header: {
-    position: 'relative',
-    marginHorizontal: -16,
-    marginTop: -16,
-    paddingTop: 56,
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    marginBottom: 16,
+  wrapper: { flex: 1, backgroundColor: COLORS.cream },
+  container: { flex: 1 },
+  content: { padding: SPACING.md, paddingBottom: 20 },
+
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  headerBg: {
-    position: 'absolute',
-    top: 0,
-    left: -20,
-    right: -20,
-    bottom: 0,
-    backgroundColor: '#1a2a4a',
-  },
-  headerRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  headerIcon: {
-    width: 52,
-    height: 52,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+  pageHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  pageIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: COLORS.blueMuted,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(42,111,219,0.2)',
   },
-  title: { fontSize: 24, color: '#fff', fontWeight: '700' },
-  sub: { fontSize: 13, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
-  emptyState: {
-    backgroundColor: '#fff',
-    padding: 28,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: 16,
+  pageTitle: { fontSize: 20, fontWeight: '800', color: COLORS.textDark },
+  pageSub: { fontSize: 12, color: COLORS.textLight, marginTop: 2 },
+  countPill: {
+    backgroundColor: COLORS.blueMuted,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(42,111,219,0.2)',
+  },
+  countPillText: { fontSize: 12, fontWeight: '600', color: COLORS.blue },
+
+  loadingWrap: { paddingVertical: 60, alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: COLORS.textMid },
+
+  emptyCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    gap: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
+    ...SHADOWS.sm,
   },
-  emptyIcon: {
+  emptyIconWrap: {
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: 'rgba(75,191,207,0.12)',
+    backgroundColor: COLORS.blueMuted,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textDark, marginBottom: 8 },
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textDark },
   emptyText: { fontSize: 14, color: COLORS.textMid, textAlign: 'center', lineHeight: 22 },
-  card: { backgroundColor: '#fff', borderRadius: BORDER_RADIUS.md, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
-  cardImage: { width: '100%', height: 200, backgroundColor: COLORS.offWhite },
-  cardBody: { padding: 16 },
-  cardTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textDark, marginBottom: 6 },
-  cardDesc: { fontSize: 14, color: COLORS.textMid, lineHeight: 22 },
-  info: {
+
+  contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: BORDER_RADIUS.md,
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.white,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    marginTop: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(0,0,0,0.06)',
+    ...SHADOWS.sm,
   },
-  infoEmoji: { fontSize: 22 },
-  infoTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textDark },
-  infoSub: { fontSize: 12, color: COLORS.textLight, marginTop: 2 },
+  contactLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  locationPin: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.redMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textDark },
+  contactSub: { fontSize: 12, color: COLORS.textLight, marginTop: 2 },
+});
+
+const card = StyleSheet.create({
+  wrap: {
+    backgroundColor: COLORS.white,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    ...SHADOWS.md,
+  },
+  wrapNoImage: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: SPACING.md,
+  },
+  imageWrap: {
+    width: '100%',
+    height: 220,
+    position: 'relative',
+    backgroundColor: COLORS.sand,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageScrim: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  imageBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  imageBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  body: { padding: SPACING.md },
+  textOnlyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.goldMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  title: { fontSize: 16, fontWeight: '700', color: COLORS.textDark, marginBottom: 6, lineHeight: 22 },
+  desc: { fontSize: 14, color: COLORS.textMid, lineHeight: 22 },
 });

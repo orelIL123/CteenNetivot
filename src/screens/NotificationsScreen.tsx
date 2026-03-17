@@ -1,22 +1,18 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { RABBI } from '../data/content';
 import { COLORS, BORDER_RADIUS } from '../constants/theme';
 import TopHeader from '../components/TopHeader';
-
-// התראות שהרב שולח — לדוגמא "היום ב-9 שיעור תניא"
-export interface RabbiNotification {
-  id: string;
-  title: string;
-  body?: string;
-  time: string;
-  date: string;
-  createdAt: string;
-}
+import { getNotifications, type NotificationDoc } from '../services/firestore';
 
 export default function NotificationsScreen() {
-  // ייטען מ-Firebase — הרב מעלה התראות
-  const notifications: RabbiNotification[] = [];
+  const [notifications, setNotifications] = useState<NotificationDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getNotifications().then(setNotifications).finally(() => setLoading(false));
+  }, []);
 
   return (
     <View style={styles.wrapper}>
@@ -35,14 +31,19 @@ export default function NotificationsScreen() {
           </View>
         </View>
 
-        {notifications.length === 0 ? (
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="large" color={COLORS.sky} />
+            <Text style={styles.loadingText}>טוען התראות...</Text>
+          </View>
+        ) : notifications.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIcon}>
               <Feather name="bell" size={40} color={COLORS.skyDark} />
             </View>
             <Text style={styles.emptyTitle}>אין התראות כרגע</Text>
             <Text style={styles.emptyText}>
-              כאן יופיעו ההתראות שהרב שולח — למשל "היום ב-9:00 שיעור תניא". בהמשך יחובר ל-Firebase.
+              כאן יופיעו ההתראות שהרב שולח — למשל "היום ב-9:00 שיעור תניא".
             </Text>
           </View>
         ) : (
@@ -125,6 +126,8 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textDark, marginBottom: 8 },
   emptyText: { fontSize: 14, color: COLORS.textMid, textAlign: 'center', lineHeight: 22 },
+  loadingWrap: { padding: 40, alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 15, color: COLORS.textMid },
   card: {
     flexDirection: 'row',
     backgroundColor: '#fff',

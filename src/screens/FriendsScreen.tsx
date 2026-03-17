@@ -3,19 +3,8 @@ import { Feather } from '@expo/vector-icons';
 import TopHeader from '../components/TopHeader';
 import { COLORS, BORDER_RADIUS } from '../constants/theme';
 
-// נתונים לדוגמה - בהמשך יחובר ל-Firebase
-const MEMBERS = [
-  { id: '1', name: 'יוסף לוי', type: 'חבר' },
-  { id: '2', name: 'דוד כהן', type: 'חבר' },
-  { id: '3', name: 'מנחם שפירא', type: 'חבר' },
-  { id: '4', name: 'אריה גולדברג', type: 'חבר' },
-  { id: '5', name: 'שמואל ברגר', type: 'חבר' },
-  { id: '6', name: 'רחל כהן', type: 'חברה' },
-  { id: '7', name: 'שרה לוי', type: 'חברה' },
-  { id: '8', name: 'מיכל גרינברג', type: 'חברה' },
-  { id: '9', name: 'אסתר דוד', type: 'חברה' },
-  { id: '10', name: 'תמר רוזנברג', type: 'חברה' },
-];
+// כרגע אין רשימת חברים אמיתית – בהמשך יחובר ל-Firebase
+const MEMBERS: { id: string; name: string; type: 'חבר' | 'חברה' }[] = [];
 
 function MemberRow({ name, type }: { name: string; type: string }) {
   return (
@@ -47,20 +36,31 @@ export default function FriendsScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>החברים ({males.length})</Text>
-          {males.map((m) => <MemberRow key={m.id} name={m.name} type={m.type} />)}
-        </View>
+        {males.length === 0 && females.length === 0 ? (
+          <View style={styles.note}>
+            <Feather name="info" size={18} color={COLORS.skyDark} />
+            <Text style={styles.noteText}>
+              בהמשך תוצג כאן רשימת החברים האמיתית של בית חב"ד לנוער נתיבות ברגע שהמערכת תחובר ל-Firebase.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>החברים ({males.length})</Text>
+              {males.map((m) => <MemberRow key={m.id} name={m.name} type={m.type} />)}
+            </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>החברות ({females.length})</Text>
-          {females.map((m) => <MemberRow key={m.id} name={m.name} type={m.type} />)}
-        </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>החברות ({females.length})</Text>
+              {females.map((m) => <MemberRow key={m.id} name={m.name} type={m.type} />)}
+            </View>
 
-        <View style={styles.note}>
-          <Feather name="info" size={18} color={COLORS.skyDark} />
-          <Text style={styles.noteText}>בהמשך רשימת החברים תתעדכן אוטומטית מ-Firebase</Text>
-        </View>
+            <View style={styles.note}>
+              <Feather name="info" size={18} color={COLORS.skyDark} />
+              <Text style={styles.noteText}>בהמשך רשימת החברים תתעדכן אוטומטית מ-Firebase</Text>
+            </View>
+          </>
+        )}
 
         <View style={{ height: 80 }} />
       </ScrollView>

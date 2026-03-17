@@ -1,6 +1,12 @@
 # Firebase Admin SDK – לא להעלות ל-Git (מפתח סודי!)
 *firebase*adminsdk*.json
 cteennetivot-*-firebase-adminsdk-*.json
+google-service-account.json
+
+# Environment – מפתחות, לעולם לא להעלות ל-Git
+.env
+.env.local
+.env.*.local
 
 # Logs
 logs
@@ -15,6 +21,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.expo/
 
 # Editor directories and files
 .vscode/*

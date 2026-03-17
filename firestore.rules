@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: בדיקת אדמין ─────────────────────────────────────────────────
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    // ── Chavrutot ────────────────────────────────────────────────────────────
+    match /chavrutot/{id} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Notifications ────────────────────────────────────────────────────────
+    match /notifications/{id} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Updates ──────────────────────────────────────────────────────────────
+    match /updates/{id} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Volunteer requests ───────────────────────────────────────────────────
+    match /volunteerRequests/{id} {
+      allow read: if isLoggedIn();
+      allow create, update, delete: if isAdmin();
+      // Allow volunteers to add themselves (not create/delete the doc)
+      allow update: if isLoggedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['volunteerUids', 'anonymousCount']);
+    }
+
+    // ── User profiles ────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isLoggedIn();
+      allow create: if isLoggedIn() && request.auth.uid == userId;
+      allow update: if isLoggedIn()
+        && (request.auth.uid == userId || isAdmin());
+      allow delete: if isLoggedIn()
+        && (request.auth.uid == userId || isAdmin());
+    }
+
+    // ── Chabad Houses ────────────────────────────────────────────────────────
+    match /chabadHouses/{id} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Shiurim ──────────────────────────────────────────────────────────────
+    match /shiurim/{shiurId} {
+      allow read: if isLoggedIn();
+      allow create, delete: if isAdmin();
+      // Admin can update fully; users can toggle rsvpUids/likeUids only
+      allow update: if isAdmin()
+        || (isLoggedIn()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rsvpUids', 'likeUids']));
+
+      match /comments/{commentId} {
+        allow read: if isLoggedIn();
+        allow create: if isLoggedIn();
+        allow delete: if isAdmin()
+          || (isLoggedIn() && resource.data.uid == request.auth.uid);
+      }
+    }
+
+    // ── App Config (hero image, etc.) – קריאה ציבורית ─────────────────────────
+    match /appConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Push tokens (for notifications) ─────────────────────────────────────
+    match /pushTokens/{userId} {
+      allow read: if isAdmin();
+      allow write: if isLoggedIn() && request.auth.uid == userId;
+    }
+
+    // ── Admin list: read-only from client (managed from Firebase Console) ────
+    match /config/admins {
+      allow read: if isLoggedIn();
+      allow write: if false;
+    }
+  }
+}

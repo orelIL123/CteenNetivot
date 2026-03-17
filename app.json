@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "CTeen נתיבות",
-    "slug": "cteen-netivot",
+    "slug": "cteennetivot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -11,16 +11,57 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1a2e"
     },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5f83ec19-6dbf-4ce2-ba27-99c473686fe3",
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cteenNetivot.app",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
         "foregroundImage": "./assets/logo.png"
+      },
+      "package": "com.cteenNetivot.app",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo.png",
+          "color": "#E8A96A",
+          "sounds": [],
+          "mode": "production"
+        }
+      ],
+      "expo-video"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5f83ec19-6dbf-4ce2-ba27-99c473686fe3"
       }
     },
+    "owner": "orels-apps"
   }
 }
